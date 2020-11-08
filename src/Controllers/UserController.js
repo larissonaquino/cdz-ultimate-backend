@@ -12,7 +12,7 @@ module.exports = {
     async userByEmail(req, res) {
         let email = req.query.email
 
-        let user = await User.findOne({ email }, 'name email').exec()
+        let user = await User.findOne({ email }, 'name lastName email').exec()
         .catch(e => {
             e.console.error('error in userByEmail', e)
             return res.sendStatus(500)
@@ -23,7 +23,6 @@ module.exports = {
 
     async register(req, res) {
         const { name, lastName, email, password } = req.body
-        
         let user = await User.findOne({ email })
         
         if (!user) {
@@ -53,7 +52,6 @@ module.exports = {
         if (user) {
             if (await validPassword(password, user.password)) {
                 const token = jwt.sign(user.toJSON(), process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' })
-                res.setHeader('token', `Bearer ${token}`)
                 return res.json({ token })
             }
         }
@@ -62,7 +60,7 @@ module.exports = {
     },
 
     async authorization(req, res) {
-        const authHeader = req.headers['token']
+        const authHeader = req.headers['authorization']
         const token = authHeader && authHeader.split(' ')[1]
 
         if (token == null) return res.sendStatus(414)
