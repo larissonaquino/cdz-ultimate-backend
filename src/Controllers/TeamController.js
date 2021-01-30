@@ -2,7 +2,7 @@ const Team = require('../Models/Team.model')
 
 module.exports = {
     async index(req, res) {
-        const team = await Team.find()
+        const team = await Team.find().sort('_id')
         return res.json(team);
     },
 

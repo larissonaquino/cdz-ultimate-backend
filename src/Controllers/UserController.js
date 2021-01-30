@@ -2,6 +2,7 @@ require('dotenv').config()
 const User = require('../Models/User.model')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const mysql = require('./../data/mysql')
 
 module.exports = {
     async index(req, res) {
@@ -10,52 +11,69 @@ module.exports = {
     },
 
     async userByEmail(req, res) {
-        let email = req.query.email
+        const email = req.query.email
 
-        let user = await User.findOne({ email }, 'name lastName email').exec()
-        .catch(e => {
-            e.console.error('error in userByEmail', e)
+        try {
+            const connection = await mysql.open()
+            const user = await mysql.userByEmail(connection, email)
+            
+            mysql.close(connection)
+            
+            return res.json(user)
+        }
+        catch(e) {
+            console.error('error in userByEmail', e)
+            mysql.close(connection)
             return res.sendStatus(500)
-        })
-
-        return res.json(user)
+        }
     },
 
     async register(req, res) {
-        const { name, lastName, email, password } = req.body
-        let user = await User.findOne({ email })
+        const { name, passwd, email } = req.body
+        const connection = await mysql.open()
+        let user = await mysql.userByEmail(connection, email).catch()
+        let error = false
+        let response = null
         
-        if (!user) {
-            const hashedPassword = await bcrypt.hash(password, 10)
-            
-            user = await User.create({
+        if (user && user.length === 0) {
+            const hashedPassword = await bcrypt.hash(passwd, 10)
+
+            user = {
                 name,
-                lastName,
-                email,
-                password: hashedPassword
-            })
-            .catch(e => {
-                console.error('error in register user', e)
-                return res.sendStatus(500)
-            })
+                passwd: hashedPassword,
+                email
+            }
+            
+            newUser = await mysql.register(connection, user)
+                .catch(e => {
+                    console.error('error in register user', e)
+                    error = true
+                    response = 409
+                })
+            }
+        else {
+            error = true
+            response = 422
         }
-        else return res.sendStatus(422)
         
-        return res.json(user)
+        mysql.close(connection)
+        return error ? res.sendStatus(response) : res.json(user)
     },
 
     async authenticate(req, res) {
-        const { email, password } = req.body
+        const { email, passwd } = req.body
+        const connection = await mysql.open()
         
-        let user = await User.findOne({ email })
+        let user = await mysql.userByEmail(connection, email).catch()
+        mysql.close(connection)
         
-        if (user) {
-            if (await validPassword(password, user.password)) {
+        if (user && user.length > 0) {
+            if (await validPassword(passwd, user.passwd)) {
                 const token = jwt.sign(user.toJSON(), process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' })
                 return res.json({ token })
             }
         }
-
+        
         return res.sendStatus(401)
     },
 
