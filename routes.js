@@ -4,18 +4,18 @@ const TeamController = require('./src/Controllers/TeamController')
 
 const routes = Router()
 
-routes.get('/users', UserController.index)
+routes.get('/api/users', UserController.index)
 
-routes.get('/team', TeamController.index)
+routes.get('/api/team', TeamController.index)
 
-routes.get('/userByEmail', UserController.userByEmail)
+routes.get('/api/userByEmail', UserController.userByEmail)
 
-routes.post('/login', UserController.authenticate)
+routes.post('/api/login', UserController.authenticate)
 
-routes.post('/register', UserController.register)
+routes.post('/api/register', UserController.register)
 
-routes.post('/teamRegister', TeamController.register)
+routes.post('/api/teamRegister', TeamController.register)
 
-routes.post('/authorization', UserController.authorization)
+routes.post('/api/authorization', UserController.authorization)
 
 module.exports = routes;
