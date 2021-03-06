@@ -8,6 +8,8 @@ const open = () => {
         database: process.env.MYSQL_DBNAME
     })
 
+    if (connection) console.error('error in opening mysql connection')
+
     return connection
 }
 

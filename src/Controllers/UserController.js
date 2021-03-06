@@ -12,18 +12,18 @@ module.exports = {
 
     async userByEmail(req, res) {
         const email = req.query.email
+        let connection = null
 
         try {
-            const connection = await mysql.open()
+            connection = await mysql.open()
             const user = await mysql.userByEmail(connection, email)
             
             mysql.close(connection)
-            
+
             return res.json(user)
-        }
-        catch(e) {
-            console.error('error in userByEmail', e)
-            mysql.close(connection)
+        } catch (e) {
+            console.error('error in userByEmail')
+            if (connection) mysql.close(connection)
             return res.sendStatus(500)
         }
     },
@@ -34,7 +34,7 @@ module.exports = {
         let user = await mysql.userByEmail(connection, email).catch()
         let error = false
         let response = null
-        
+
         if (user && user.length === 0) {
             const hashedPassword = await bcrypt.hash(passwd, 10)
 
@@ -43,19 +43,18 @@ module.exports = {
                 passwd: hashedPassword,
                 email
             }
-            
+
             newUser = await mysql.register(connection, user)
                 .catch(e => {
                     console.error('error in register user', e)
                     error = true
                     response = 409
                 })
-            }
-        else {
+        } else {
             error = true
             response = 422
         }
-        
+
         mysql.close(connection)
         return error ? res.sendStatus(response) : res.json(user)
     },
@@ -63,17 +62,19 @@ module.exports = {
     async authenticate(req, res) {
         const { email, passwd } = req.body
         const connection = await mysql.open()
-        
-        let user = await mysql.userByEmail(connection, email).catch()
+
+        let user = await mysql.userByEmail(connection, email).catch((e) => {
+            console.error('erro ao tentar conectar-se ao mysql', e)
+        })
         mysql.close(connection)
-        
+
         if (user && user.length > 0) {
             if (await validPassword(passwd, user.passwd)) {
                 const token = jwt.sign(user.toJSON(), process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' })
                 return res.json({ token })
             }
         }
-        
+
         return res.sendStatus(401)
     },
 
@@ -86,14 +87,13 @@ module.exports = {
         try {
             jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
                 if (err) return res.sendStatus(403)
-                
+
                 return res.json(user)
             })
-        }
-        catch(e) {
+        } catch (e) {
             return res.sendStatus(401)
         }
     }
 }
 
-validPassword = async (password, hash) => await bcrypt.compare(password, hash)
+validPassword = async(password, hash) => await bcrypt.compare(password, hash)
