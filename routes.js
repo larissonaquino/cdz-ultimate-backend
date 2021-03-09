@@ -10,7 +10,7 @@ routes.get('/api/team', TeamController.index)
 
 routes.get('/api/userByEmail', UserController.userByEmail)
 
-routes.post('/api/login', UserController.authenticate)
+routes.post('/api/authenticate', UserController.authenticate)
 
 routes.post('/api/register', UserController.register)
 
