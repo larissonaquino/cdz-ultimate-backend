@@ -1,14 +1,20 @@
 const mysql = require('mysql2/promise')
 
-const open = () => {
-    const connection = mysql.createConnection({
-        host: process.env.MYSQL_CONNECTION,
-        user: process.env.MYSQL_USER,
-        password: process.env.MYSQL_PASS,
-        database: process.env.MYSQL_DBNAME
-    })
+const open = async () => {
+    let connection = null
 
-    if (connection) console.error('error in opening mysql connection')
+    try {
+        connection = await mysql.createConnection({
+            host: process.env.MYSQL_CONNECTION,
+            user: process.env.MYSQL_USER,
+            password: process.env.MYSQL_PASS,
+            database: process.env.MYSQL_DBNAME
+        })
+    }
+    catch (e) {
+        if (!connection) console.error('error in opening mysql connection')
+        throw new Error(e)
+    }
 
     return connection
 }
@@ -19,11 +25,11 @@ const close = (connection) => {
 
 const userByEmail = async (connection, email) => {
     try {
-        const [user] = await connection.query("SELECT id, name, email FROM `users` WHERE `email` = ?", [email])
+        const [user] = await connection.query("SELECT id, name, email, passwd FROM `users` WHERE `email` = ?", [email])
         return user
     }
-    catch(e) {
-        console.error("Erro ao tentar executar userByEmail", e)
+    catch (e) {
+        console.error("error in try to execute userByEmail method at mysql.js", e)
         throw new Error("Erro ao tentar executar userByEmail", e)
     }
 }
@@ -41,7 +47,7 @@ const register = async (connection, user) => {
         return newUser
     }
     catch (e) {
-        throw e
+        throw new Error(e)
     }
 }
 

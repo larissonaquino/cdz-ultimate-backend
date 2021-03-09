@@ -17,7 +17,7 @@ module.exports = {
         try {
             connection = await mysql.open()
             const user = await mysql.userByEmail(connection, email)
-            
+
             mysql.close(connection)
 
             return res.json(user)
@@ -30,47 +30,61 @@ module.exports = {
 
     async register(req, res) {
         const { name, passwd, email } = req.body
-        const connection = await mysql.open()
-        let user = await mysql.userByEmail(connection, email).catch()
-        let error = false
-        let response = null
 
-        if (user && user.length === 0) {
-            const hashedPassword = await bcrypt.hash(passwd, 10)
+        try {
+            const connection = await mysql.open()
+            let user = await mysql.userByEmail(connection, email).catch()
+            let error = false
+            let response = null
 
-            user = {
-                name,
-                passwd: hashedPassword,
-                email
+            if (user && user.length === 0) {
+                const hashedPassword = await bcrypt.hash(passwd, 10)
+
+                user = {
+                    name,
+                    passwd: hashedPassword,
+                    email
+                }
+
+                newUser = await mysql.register(connection, user)
+                    .catch(e => {
+                        console.error('error in register user', e)
+                        error = true
+                        response = 409
+                    })
+            } else {
+                error = true
+                response = 422
             }
 
-            newUser = await mysql.register(connection, user)
-                .catch(e => {
-                    console.error('error in register user', e)
-                    error = true
-                    response = 409
-                })
-        } else {
-            error = true
-            response = 422
+            mysql.close(connection)
+            return error ? res.sendStatus(response) : res.json(user)
         }
-
-        mysql.close(connection)
-        return error ? res.sendStatus(response) : res.json(user)
+        catch (e) {
+            console.error('error in register method', e)
+            return res.sendStatus(500)
+        }
     },
 
     async authenticate(req, res) {
         const { email, passwd } = req.body
         const connection = await mysql.open()
 
-        let user = await mysql.userByEmail(connection, email).catch((e) => {
+        let [user] = await mysql.userByEmail(connection, email).catch((e) => {
             console.error('erro ao tentar conectar-se ao mysql', e)
         })
         mysql.close(connection)
 
-        if (user && user.length > 0) {
+        if (user) {
             if (await validPassword(passwd, user.passwd)) {
-                const token = jwt.sign(user.toJSON(), process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' })
+                const obj = await {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    passwd: user.passwd
+                }
+                
+                const token = jwt.sign(obj, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' })
                 return res.json({ token })
             }
         }
@@ -96,4 +110,4 @@ module.exports = {
     }
 }
 
-validPassword = async(password, hash) => await bcrypt.compare(password, hash)
+validPassword = async (password, hash) => await bcrypt.compare(password, hash)
