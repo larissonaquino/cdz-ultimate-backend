@@ -101,7 +101,8 @@ module.exports = {
         try {
             jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
                 if (err) return res.sendStatus(403)
-
+                
+                delete user.passwd
                 return res.json(user)
             })
         } catch (e) {
