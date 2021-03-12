@@ -34,16 +34,24 @@ const userByEmail = async (connection, email) => {
     }
 }
 
+const userExists = async (connection, user) => {
+    try {
+        const [userAlreadyExists] = await connection.query("SELECT 1 FROM `users` WHERE `name` = ? OR email = ?", [user.name, user.email])
+
+        if (userAlreadyExists.length > 0) return null
+    }
+    catch (e) {
+        console.error("error in try to execute userExists method at mysql.js", e)
+        throw new Error("Erro ao tentar executar userExists", e)
+    }
+}
+
 const register = async (connection, user) => {
     try {
-        const [userExists] = await connection.query("SELECT 1 FROM users WHERE email = ?", [user.email])
-        
-        if (userExists.length > 0) return null
-    
         const [newUser] = await connection.query(`
             INSERT INTO users (id, name, passwd, passwd2, email)
             SELECT (SELECT MAX(id) + 1 FROM users) AS ID, ?, ?, ?, ?`, [user.name, user.passwd, user.passwd, user.email]).catch(e => { throw new Error(e) })
-    
+
         return newUser
     }
     catch (e) {
@@ -52,5 +60,5 @@ const register = async (connection, user) => {
 }
 
 module.exports = {
-    open, close, userByEmail, register
+    open, close, userByEmail, userExists, register
 }

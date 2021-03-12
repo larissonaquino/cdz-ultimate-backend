@@ -33,7 +33,7 @@ module.exports = {
 
         try {
             const connection = await mysql.open()
-            let user = await mysql.userByEmail(connection, email).catch()
+            let user = await mysql.userExists(connection, {name, passwd, email}).catch()
             let error = false
             let response = null
 
