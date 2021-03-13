@@ -67,10 +67,10 @@ module.exports = {
     },
 
     async authenticate(req, res) {
-        const { email, passwd } = req.body
+        const { name, passwd } = req.body
         const connection = await mysql.open()
 
-        let [user] = await mysql.userByEmail(connection, email).catch((e) => {
+        let [user] = await mysql.userByUsername(connection, name).catch((e) => {
             console.error('erro ao tentar conectar-se ao mysql', e)
         })
         mysql.close(connection)

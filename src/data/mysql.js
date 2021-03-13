@@ -34,6 +34,17 @@ const userByEmail = async (connection, email) => {
     }
 }
 
+const userByUsername = async (connection, username) => {
+    try {
+        const [user] = await connection.query("SELECT id, name, email, passwd FROM `users` WHERE `name` = ?", [username])
+        return user
+    }
+    catch (e) {
+        console.error("error in try to execute userByUsername method at mysql.js", e)
+        throw new Error("Erro ao tentar executar userByUsername", e)
+    }
+}
+
 const userExists = async (connection, user) => {
     try {
         const [userAlreadyExists] = await connection.query("SELECT 1 FROM `users` WHERE `name` = ? OR email = ?", [user.name, user.email])
@@ -60,5 +71,5 @@ const register = async (connection, user) => {
 }
 
 module.exports = {
-    open, close, userByEmail, userExists, register
+    open, close, userByEmail, userByUsername, userExists, register
 }
