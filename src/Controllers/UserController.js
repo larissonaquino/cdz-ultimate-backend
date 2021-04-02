@@ -10,6 +10,24 @@ module.exports = {
         return res.json(users);
     },
 
+    async userByUsername(req, res) {
+        const username = req.query.username
+        let connection = null
+
+        try {
+            connection = await mysql.open()
+            const user = await mysql.userByUsername(connection, username)
+
+            mysql.close(connection)
+
+            return res.json(user)
+        } catch (e) {
+            console.error('error in userByUsername')
+            if (connection) mysql.close(connection)
+            return res.sendStatus(500)
+        }
+    },
+
     async userByEmail(req, res) {
         const email = req.query.email
         let connection = null

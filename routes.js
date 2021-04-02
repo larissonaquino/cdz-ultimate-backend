@@ -8,6 +8,8 @@ routes.get('/api/users', UserController.index)
 
 routes.get('/api/team', TeamController.index)
 
+routes.get('/api/userByUsername', UserController.userByUsername)
+
 routes.get('/api/userByEmail', UserController.userByEmail)
 
 routes.post('/api/authenticate', UserController.authenticate)
