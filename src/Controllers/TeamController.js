@@ -2,7 +2,7 @@ const Team = require('../Models/Team.model')
 
 module.exports = {
     async index(req, res) {
-        const team = await Team.find().sort('_id')
+        const team = await Team.find().sort('_id').catch(() => res.sendStatus(500))
         return res.json(team);
     },
 

@@ -3,6 +3,7 @@ const User = require('../Models/User.model')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const mysql = require('./../data/mysql')
+const axios = require('axios')
 
 module.exports = {
     async index(req, res) {
@@ -51,24 +52,41 @@ module.exports = {
 
         try {
             const connection = await mysql.open()
-            let user = await mysql.userExists(connection, {name, passwd, email}).catch()
+            let user = await mysql.userExists(connection, { name, passwd, email }).catch()
             let error = false
             let response = null
 
             if (user && user.length === 0) {
-                const hashedPassword = await bcrypt.hash(passwd, 10)
 
                 user = {
                     name,
-                    passwd: hashedPassword,
+                    passwd,
                     email
                 }
 
-                newUser = await mysql.register(connection, user)
-                    .catch(e => {
-                        console.error('error in register user', e)
-                        error = true
-                        response = 409
+                const params = new URLSearchParams()
+
+                params.append('login', user.name)
+                params.append('password', user.passwd)
+
+                const config = {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                }
+                const url = 'http://131.255.4.101:8080/pwAdmin/index.jsp?page=account&action=adduser'
+
+                await axios.post(url, params, config)
+                    .then(async (result) => {
+                        await mysql.updateEmail(connection, user)
+                            .catch(e => {
+                                console.error('error in register user', e)
+                                error = true
+                                response = 409
+                            })
+                    })
+                    .catch((e) => {
+                        console.error('error in creating account', e)
                     })
             } else {
                 error = true
@@ -94,17 +112,17 @@ module.exports = {
         mysql.close(connection)
 
         if (user) {
-            if (await validPassword(passwd, user.passwd)) {
-                const obj = await {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    passwd: user.passwd
-                }
-                
-                const token = jwt.sign(obj, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' })
-                return res.json({ token })
+            // if (await validPassword(passwd, user.passwd)) {
+            const obj = await {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                passwd: user.passwd
             }
+
+            const token = jwt.sign(obj, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' })
+            return res.json({ token })
+            // }
         }
 
         return res.sendStatus(401)
@@ -119,7 +137,7 @@ module.exports = {
         try {
             jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
                 if (err) return res.sendStatus(403)
-                
+
                 delete user.passwd
                 return res.json(user)
             })
