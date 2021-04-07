@@ -29,7 +29,7 @@ app.use(routes);
 app.listen(PORT);
 console.log(`Running on ${PORT}...`);
 
-// Integração mercadopago
+//REPLACE WITH YOUR ACCESS TOKEN AVAILABLE IN: https://developers.mercadopago.com/panel/credentials
 // mercadopago.configurations.setAccessToken("YOUR_ACCESS_TOKEN"); 
 
 // app.use(express.urlencoded({ extended: false }));
