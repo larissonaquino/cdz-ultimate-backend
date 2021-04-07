@@ -1,6 +1,5 @@
 require('dotenv').config()
 const User = require('../Models/User.model')
-const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const mysql = require('./../data/mysql')
 const axios = require('axios')
@@ -74,13 +73,13 @@ module.exports = {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     }
                 }
-                const url = 'http://131.255.4.101:8080/pwAdmin/index.jsp?page=account&action=adduser'
+                const url = process.env.PW_CREATE_ACCOUNT
 
                 await axios.post(url, params, config)
                     .then(async (result) => {
                         await mysql.updateEmail(connection, user)
                             .catch(e => {
-                                console.error('error in register user', e)
+                                console.error('error in updateEmail', e)
                                 error = true
                                 response = 409
                             })
@@ -109,20 +108,21 @@ module.exports = {
         let [user] = await mysql.userByUsername(connection, name).catch((e) => {
             console.error('erro ao tentar conectar-se ao mysql', e)
         })
+
         mysql.close(connection)
 
         if (user) {
-            // if (await validPassword(passwd, user.passwd)) {
-            const obj = await {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                passwd: user.passwd
-            }
+            if (await validPassword(name, passwd)) {
+                const payload = {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    passwd: user.passwd
+                }
 
-            const token = jwt.sign(obj, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' })
-            return res.json({ token })
-            // }
+                const token = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' })
+                return res.json({ token })
+            }
         }
 
         return res.sendStatus(401)
@@ -147,4 +147,30 @@ module.exports = {
     }
 }
 
-validPassword = async (password, hash) => await bcrypt.compare(password, hash)
+validPassword = async (name, password) => {
+    const params = new URLSearchParams()
+
+    params.append('login', name)
+    params.append('password_old', password)
+    params.append('password_new', password)
+
+    const config = {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    }
+    const url = process.env.PW_CHANGE_PASSWORD
+
+    let ok = true
+
+    await axios.post(url, params, config)
+        .then(async (result) => {
+            if(result.data.includes('Old Password Mismatch') || result.data.includes('Only 4-10 Characters'))
+                ok = false
+        })
+        .catch((e) => {
+            console.error('error in password call', e)
+        })
+
+    return ok
+}
