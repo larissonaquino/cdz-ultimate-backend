@@ -1,6 +1,7 @@
 const express = require('express')
 const routes = require('./routes')
 const cors = require('cors')
+const rateLimit = require('express-rate-limit')
 const mongoose = require('mongoose')
 
 if (process.env.NODE_ENV !== 'prod')
@@ -16,9 +17,15 @@ mongoose.connect(`mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGOD
     console.error('error in connect to MongoDB', e)
 });
 
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100
+})
+
+app.use(limiter)
 app.use(cors());
 app.use(express.json());
-app.use(routes); 
+app.use(routes);
 
 app.listen(PORT);
 console.log(`Running on ${PORT}...`);
