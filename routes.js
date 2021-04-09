@@ -51,4 +51,8 @@ routes.post('/api/authenticate', authenticateLimiter, UserController.authenticat
 
 routes.post('/api/authorization', authorizationLimiter, UserController.authorization)
 
+routes.get('api/health', (req, res) => {
+    return res.json({ health: 'healthy' })
+})
+
 module.exports = routes;
