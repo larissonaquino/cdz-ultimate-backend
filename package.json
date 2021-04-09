@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "cdz-utlimate-backend",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -7,9 +7,12 @@
     "dev": "nodemon index.js",
     "start": "node index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "cdz-ultimate",
+    "heroku"
+  ],
+  "author": "larisson-aquino",
+  "license": "MIT",
   "devDependencies": {
     "dotenv": "^8.2.0",
     "nodemon": "^2.0.6"
@@ -23,5 +26,8 @@
     "mercadopago": "^1.5.6",
     "mongoose": "^5.10.13",
     "mysql2": "^2.2.5"
+  },
+  "engines": {
+    "node": "14.x"
   }
 }
