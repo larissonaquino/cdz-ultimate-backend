@@ -25,7 +25,7 @@ const mercadopago = require("mercadopago");
 //         console.log(error);
 //     });
 
-mercadopago.configurations.setAccessToken("APP_USR-3498903699968178-032718-8e24418274c111c52b4952d80a5af608-181779562");
+mercadopago.configurations.setAccessToken("YOUR_ACCESS_TOKEN");
 
 var payment_data = {
   transaction_amount: Number(req.body.transactionAmount),
